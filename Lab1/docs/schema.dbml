@@ -1,0 +1,194 @@
+// Інтернет-платформа для фрілансерів (PostgreSQL)
+
+Table users {
+  id bigint [pk, increment, not null]
+  email varchar(254) [not null, unique]
+  display_name varchar(120) [not null]
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Table roles {
+  id bigint [pk, increment, not null]
+  code varchar(30) [not null, unique]
+  name varchar(80) [not null]
+}
+
+Table user_roles {
+  user_id bigint [not null]
+  role_id bigint [not null]
+  indexes {
+    (user_id, role_id) [pk]
+  }
+}
+
+Table freelancer_profiles {
+  user_id bigint [pk, not null]
+  title varchar(160) [not null]
+  bio text [not null, default: `''`]
+  hourly_rate numeric(14,2) [not null]
+}
+
+Table client_profiles {
+  user_id bigint [pk, not null]
+  company_name varchar(160)
+  description text [not null, default: `''`]
+}
+
+Table categories {
+  id bigint [pk, increment, not null]
+  name varchar(100) [not null, unique]
+}
+
+Table skills {
+  id bigint [pk, increment, not null]
+  name varchar(100) [not null, unique]
+}
+
+Table freelancer_skills {
+  freelancer_id bigint [not null]
+  skill_id bigint [not null]
+  indexes {
+    (freelancer_id, skill_id) [pk]
+  }
+}
+
+Table projects {
+  id bigint [pk, increment, not null]
+  client_id bigint [not null]
+  category_id bigint [not null]
+  title varchar(200) [not null]
+  description text [not null]
+  budget numeric(14,2) [not null]
+  deadline date [not null]
+  status varchar(20) [not null, default: `'draft'`]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by bigint [not null]
+  deleted_at timestamptz
+  deleted_by bigint
+  search_vector tsvector
+}
+
+Table project_skills {
+  project_id bigint [not null]
+  skill_id bigint [not null]
+  indexes {
+    (project_id, skill_id) [pk]
+  }
+}
+
+Table proposals {
+  id bigint [pk, increment, not null]
+  project_id bigint [not null]
+  freelancer_id bigint [not null]
+  cover_letter text [not null]
+  proposed_amount numeric(14,2) [not null]
+  estimated_days integer [not null]
+  status varchar(20) [not null, default: `'pending'`]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by bigint [not null]
+  indexes {
+    (project_id, freelancer_id) [unique]
+  }
+}
+
+Table contracts {
+  id bigint [pk, increment, not null]
+  project_id bigint [not null, unique]
+  proposal_id bigint [not null, unique]
+  agreed_amount numeric(14,2) [not null]
+  status varchar(20) [not null, default: `'active'`]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by bigint [not null]
+}
+
+Table milestones {
+  id bigint [pk, increment, not null]
+  contract_id bigint [not null]
+  title varchar(200) [not null]
+  amount numeric(14,2) [not null]
+  due_date date [not null]
+  status varchar(20) [not null, default: `'pending'`]
+}
+
+Table submissions {
+  id bigint [pk, increment, not null]
+  milestone_id bigint [not null]
+  description text [not null]
+  result_url text
+  submitted_at timestamptz [not null, default: `now()`]
+}
+
+Table payments {
+  id bigint [pk, increment, not null]
+  milestone_id bigint [not null]
+  amount numeric(14,2) [not null]
+  external_reference varchar(120) [not null, unique]
+  paid_at timestamptz [not null, default: `now()`]
+}
+
+Table reviews {
+  id bigint [pk, increment, not null]
+  contract_id bigint [not null]
+  author_id bigint [not null]
+  rating smallint [not null]
+  comment text [not null, default: `''`]
+  created_at timestamptz [not null, default: `now()`]
+  indexes {
+    (contract_id, author_id) [unique]
+  }
+}
+
+Table messages {
+  id bigint [pk, increment, not null]
+  contract_id bigint [not null]
+  sender_id bigint [not null]
+  recipient_id bigint [not null]
+  body text [not null]
+  sent_at timestamptz [not null, default: `now()`]
+}
+
+Table portfolio_items {
+  id bigint [pk, increment, not null]
+  freelancer_id bigint [not null]
+  title varchar(200) [not null]
+  description text [not null, default: `''`]
+  project_url text
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by bigint [not null]
+  deleted_at timestamptz
+  deleted_by bigint
+}
+
+Ref: user_roles.user_id > users.id
+Ref: user_roles.role_id > roles.id
+Ref: freelancer_profiles.user_id - users.id
+Ref: client_profiles.user_id - users.id
+Ref: freelancer_skills.freelancer_id > freelancer_profiles.user_id
+Ref: freelancer_skills.skill_id > skills.id
+Ref: projects.client_id > client_profiles.user_id
+Ref: projects.category_id > categories.id
+Ref: projects.updated_by > users.id
+Ref: projects.deleted_by > users.id
+Ref: project_skills.project_id > projects.id
+Ref: project_skills.skill_id > skills.id
+Ref: proposals.project_id > projects.id
+Ref: proposals.freelancer_id > freelancer_profiles.user_id
+Ref: proposals.updated_by > users.id
+Ref: contracts.project_id - projects.id
+Ref: contracts.proposal_id - proposals.id
+Ref: contracts.updated_by > users.id
+Ref: milestones.contract_id > contracts.id
+Ref: submissions.milestone_id > milestones.id
+Ref: payments.milestone_id > milestones.id
+Ref: reviews.contract_id > contracts.id
+Ref: reviews.author_id > users.id
+Ref: messages.contract_id > contracts.id
+Ref: messages.sender_id > users.id
+Ref: messages.recipient_id > users.id
+Ref: portfolio_items.freelancer_id > freelancer_profiles.user_id
+Ref: portfolio_items.updated_by > users.id
+Ref: portfolio_items.deleted_by > users.id
