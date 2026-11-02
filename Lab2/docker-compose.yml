@@ -1,0 +1,52 @@
+# Обидві бази отримують одні й ті самі ядра та пам'ять. cpuset замість cpus: квота cpus
+# призупиняє контейнер на десятки мілісекунд і спотворює хвости затримок.
+x-limits: &limits
+  cpuset: "0-3"
+  mem_limit: 2g
+
+services:
+  postgres:
+    image: postgres:18.1
+    <<: *limits
+    shm_size: 1g
+    ports: ["55432:5432"]
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: catalog
+    command: >
+      postgres
+      -c shared_buffers=512MB
+      -c effective_cache_size=1GB
+      -c work_mem=32MB
+      -c maintenance_work_mem=256MB
+      -c random_page_cost=1.1
+      -c max_wal_size=2GB
+    volumes: [pgdata:/var/lib/postgresql]
+
+  mongo:
+    image: mongo:8.0.15
+    <<: *limits
+    ports: ["57017:27017"]
+    command: mongod --wiredTigerCacheSizeGB 0.5
+    volumes: [mongodata:/data/db]
+
+  redis:
+    image: redis:8.2.2
+    ports: ["56379:6379"]
+
+  # Клієнт у тій самій мережі Docker: без цього заміри включають проксі портів Docker Desktop.
+  bench:
+    image: mcr.microsoft.com/dotnet/runtime:10.0
+    profiles: [tools]
+    cpuset: "8-15"
+    depends_on: [postgres, mongo]
+    working_dir: /lab
+    volumes: [".:/lab"]
+    entrypoint: ["dotnet", "src/CatalogBench/bin/Release/net10.0/CatalogBench.dll"]
+    environment:
+      CATALOG_SQL: "Host=postgres;Port=5432;Database=catalog;Username=postgres;Password=postgres;Max Auto Prepare=30;Auto Prepare Min Usages=2;Command Timeout=0;Maximum Pool Size=32"
+      CATALOG_MONGO: "mongodb://mongo:27017/?maxPoolSize=32&socketTimeoutMS=0"
+
+volumes:
+  pgdata:
+  mongodata:
