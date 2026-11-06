@@ -1,0 +1,115 @@
+
+--- STRING: кеш картки проєкту з часом життя 60 с
+> SET project:42:card {"id":42,"title":"Backend API","budget":12000} EX 60
+OK
+> GET project:42:card
+{"id":42,"title":"Backend API","budget":12000}
+> TTL project:42:card
+60
+> EXISTS project:42:card
+1
+> DEL project:42:card
+1
+> GET project:42:card
+
+
+--- Лічильник переглядів: INCR атомарний
+> INCR project:42:views
+1
+> INCRBY project:42:views 10
+11
+> GET project:42:views
+11
+
+--- Обмеження частоти: лічильник заявок фрілансера за годину
+> INCR rate:proposals:freelancer:7
+1
+> EXPIRE rate:proposals:freelancer:7 3600
+1
+> INCR rate:proposals:freelancer:7
+2
+> INCR rate:proposals:freelancer:7
+3
+> TTL rate:proposals:freelancer:7
+3600
+
+--- HASH: сесія користувача
+> HSET session:abc user_id 7 role freelancer lang uk
+3
+> HGET session:abc role
+freelancer
+> HSET session:abc lang en
+0
+> HGETALL session:abc
+user_id
+7
+role
+freelancer
+lang
+en
+> EXPIRE session:abc 1800
+1
+
+--- SET: хто зараз онлайн, перетин двох множин
+> SADD online 7 8 9 10
+4
+> SADD skill:postgresql 7 9 11
+3
+> SISMEMBER online 7
+1
+> SINTER online skill:postgresql
+7
+9
+> SREM online 9
+1
+> SCARD online
+3
+
+--- LIST: останні переглянуті проєкти, зберігаємо 3
+> LPUSH viewed:7 101
+1
+> LPUSH viewed:7 102
+2
+> LPUSH viewed:7 103
+3
+> LPUSH viewed:7 104
+4
+> LTRIM viewed:7 0 2
+OK
+> LRANGE viewed:7 0 -1
+104
+103
+102
+
+--- ZSET: рейтинг фрілансерів за заробленою сумою
+> ZADD leaderboard 12000 freelancer:7 8500 freelancer:8 21000 freelancer:9
+3
+> ZINCRBY leaderboard 10000 freelancer:8
+18500
+> ZREVRANGE leaderboard 0 1 WITHSCORES
+freelancer:9
+21000
+freelancer:8
+18500
+> ZREVRANK leaderboard freelancer:7
+2
+> ZSCORE leaderboard freelancer:8
+18500
+> ZRANGEBYSCORE leaderboard 15000 25000 WITHSCORES
+freelancer:8
+18500
+freelancer:9
+21000
+
+--- MULTI/EXEC: заявка і рейтинг змінюються атомарно
+OK
+QUEUED
+QUEUED
+1
+1
+
+--- SCAN: пошук ключів за шаблоном без блокування сервера
+> SCAN 0 MATCH project:* COUNT 100
+0
+project:42:proposals
+project:42:views
