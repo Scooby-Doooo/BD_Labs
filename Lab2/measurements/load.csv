@@ -1,0 +1,7 @@
+projects,db,proposals,load_s,index_s,data_mb,index_mb
+10000,PostgreSQL,42810,1.8,1.1,43,12
+10000,MongoDB,42810,1.5,1.3,16,13
+100000,PostgreSQL,428859,9.3,7.1,421,112
+100000,MongoDB,428859,8.1,12.7,164,122
+500000,PostgreSQL,2144852,47.6,73.9,2100,534
+500000,MongoDB,2144852,41.7,64.0,837,550

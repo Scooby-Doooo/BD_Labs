@@ -1,0 +1,388 @@
+Параметри: {"ProjectId":59886,"SkillIds":[54,80],"Min":4534.48,"Max":13603.44,"Key":"stack","Value":"go","Words":["loqua","quagurmi"],"FreelancerId":5851}
+
+=== PostgreSQL ===
+--- card, query 1 of 4
+Nested Loop (actual time=0.050..0.053 rows=1.00 loops=1)
+  Buffers: shared hit=10
+  ->  Nested Loop (actual time=0.042..0.045 rows=1.00 loops=1)
+        Buffers: shared hit=7
+        ->  Hash Join (actual time=0.034..0.036 rows=1.00 loops=1)
+              Hash Cond: (c.id = p.category_id)
+              Buffers: shared hit=4
+              ->  Seq Scan on categories c (actual time=0.003..0.004 rows=12.00 loops=1)
+                    Buffers: shared hit=1
+              ->  Hash (actual time=0.024..0.025 rows=1.00 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=3
+                    ->  Index Scan using projects_pkey on projects p (actual time=0.020..0.021 rows=1.00 loops=1)
+                          Index Cond: (id = '59886'::bigint)
+                          Index Searches: 1
+                          Buffers: shared hit=3
+        ->  Index Scan using users_pkey on users u (actual time=0.007..0.007 rows=1.00 loops=1)
+              Index Cond: (id = p.client_id)
+              Index Searches: 1
+              Buffers: shared hit=3
+  ->  Index Scan using client_profiles_pkey on client_profiles cp (actual time=0.007..0.007 rows=1.00 loops=1)
+        Index Cond: (user_id = u.id)
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=329
+Planning Time: 0.711 ms
+Execution Time: 0.084 ms
+--- card, query 2 of 4
+Sort (actual time=0.064..0.065 rows=4.00 loops=1)
+  Sort Key: s.id
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=9
+  ->  Hash Join (actual time=0.030..0.050 rows=4.00 loops=1)
+        Hash Cond: (s.id = ps.skill_id)
+        Buffers: shared hit=6
+        ->  Seq Scan on skills s (actual time=0.004..0.013 rows=200.00 loops=1)
+              Buffers: shared hit=2
+        ->  Hash (actual time=0.020..0.020 rows=4.00 loops=1)
+              Buckets: 1024  Batches: 1  Memory Usage: 9kB
+              Buffers: shared hit=4
+              ->  Index Only Scan using project_skills_pkey on project_skills ps (actual time=0.015..0.016 rows=4.00 loops=1)
+                    Index Cond: (project_id = '59886'::bigint)
+                    Heap Fetches: 0
+                    Index Searches: 1
+                    Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=97
+Planning Time: 0.335 ms
+Execution Time: 0.083 ms
+--- card, query 3 of 4
+Sort (actual time=0.101..0.102 rows=3.00 loops=1)
+  Sort Key: key COLLATE "C"
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=7
+  ->  Index Scan using project_attributes_pkey on project_attributes a (actual time=0.083..0.084 rows=3.00 loops=1)
+        Index Cond: (project_id = '59886'::bigint)
+        Index Searches: 1
+        Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=52
+Planning Time: 0.244 ms
+Execution Time: 0.115 ms
+--- card, query 4 of 4
+Sort (actual time=0.053..0.054 rows=0.00 loops=1)
+  Sort Key: pr.id
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=3
+  ->  Nested Loop (actual time=0.051..0.051 rows=0.00 loops=1)
+        Join Filter: (u.id = pr.freelancer_id)
+        Buffers: shared hit=3
+        ->  Nested Loop (actual time=0.050..0.051 rows=0.00 loops=1)
+              Buffers: shared hit=3
+              ->  Index Scan using proposals_project_id_freelancer_id_key on proposals pr (actual time=0.050..0.050 rows=0.00 loops=1)
+                    Index Cond: (project_id = '59886'::bigint)
+                    Index Searches: 1
+                    Buffers: shared hit=3
+              ->  Index Scan using freelancer_profiles_pkey on freelancer_profiles fp (never executed)
+                    Index Cond: (user_id = pr.freelancer_id)
+                    Index Searches: 0
+        ->  Index Scan using users_pkey on users u (never executed)
+              Index Cond: (id = fp.user_id)
+              Index Searches: 0
+Planning:
+  Buffers: shared hit=173
+Planning Time: 0.587 ms
+Execution Time: 0.071 ms
+--- catalog
+Limit (actual time=0.221..5.964 rows=20.00 loops=1)
+  Buffers: shared hit=5759
+  ->  Nested Loop (actual time=0.221..5.960 rows=20.00 loops=1)
+        Buffers: shared hit=5759
+        ->  Nested Loop (actual time=0.135..5.122 rows=20.00 loops=1)
+              Join Filter: (c.id = p.category_id)
+              Rows Removed by Join Filter: 107
+              Buffers: shared hit=5536
+              ->  Nested Loop Semi Join (actual time=0.119..5.083 rows=20.00 loops=1)
+                    Buffers: shared hit=5535
+                    ->  Index Scan using ix_projects_catalog on projects p (actual time=0.027..3.367 rows=977.00 loops=1)
+                          Index Cond: ((status)::text = 'open'::text)
+                          Filter: ((budget >= 4534.48) AND (budget <= 13603.44))
+                          Rows Removed by Filter: 4010
+                          Index Searches: 1
+                          Buffers: shared hit=2603
+                    ->  Index Only Scan using project_skills_pkey on project_skills ps (actual time=0.002..0.002 rows=0.02 loops=977)
+                          Index Cond: ((project_id = p.id) AND (skill_id = ANY ('{54,80}'::bigint[])))
+                          Heap Fetches: 0
+                          Index Searches: 977
+                          Buffers: shared hit=2932
+              ->  Materialize (actual time=0.001..0.001 rows=6.35 loops=20)
+                    Storage: Memory  Maximum Storage: 17kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on categories c (actual time=0.007..0.007 rows=12.00 loops=1)
+                          Buffers: shared hit=1
+        ->  Index Scan using users_pkey on users u (actual time=0.003..0.003 rows=1.00 loops=20)
+              Index Cond: (id = p.client_id)
+              Index Searches: 20
+              Buffers: shared hit=60
+        SubPlan 1
+          ->  Aggregate (actual time=0.033..0.033 rows=1.00 loops=20)
+                Buffers: shared hit=101
+                ->  Sort (actual time=0.030..0.031 rows=3.80 loops=20)
+                      Sort Key: s.id
+                      Sort Method: quicksort  Memory: 25kB
+                      Buffers: shared hit=101
+                      ->  Hash Join (actual time=0.008..0.028 rows=3.80 loops=20)
+                            Hash Cond: (s.id = ps_1.skill_id)
+                            Buffers: shared hit=101
+                            ->  Seq Scan on skills s (actual time=0.001..0.012 rows=200.00 loops=20)
+                                  Buffers: shared hit=40
+                            ->  Hash (actual time=0.003..0.003 rows=3.80 loops=20)
+                                  Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                  Buffers: shared hit=61
+                                  ->  Index Only Scan using project_skills_pkey on project_skills ps_1 (actual time=0.002..0.002 rows=3.80 loops=20)
+                                        Index Cond: (project_id = p.id)
+                                        Heap Fetches: 0
+                                        Index Searches: 20
+                                        Buffers: shared hit=61
+        SubPlan 2
+          ->  Aggregate (actual time=0.004..0.004 rows=1.00 loops=20)
+                Buffers: shared hit=62
+                ->  Index Only Scan using proposals_project_id_freelancer_id_key on proposals pr (actual time=0.003..0.004 rows=3.05 loops=20)
+                      Index Cond: (project_id = p.id)
+                      Heap Fetches: 0
+                      Index Searches: 20
+                      Buffers: shared hit=62
+Planning:
+  Buffers: shared hit=62
+Planning Time: 0.816 ms
+Execution Time: 6.013 ms
+--- by_attribute
+Limit (actual time=6.245..6.833 rows=20.00 loops=1)
+  Buffers: shared hit=6649
+  ->  Result (actual time=6.244..6.830 rows=20.00 loops=1)
+        Buffers: shared hit=6649
+        ->  Sort (actual time=6.158..6.161 rows=20.00 loops=1)
+              Sort Key: p.created_at DESC
+              Sort Method: top-N heapsort  Memory: 30kB
+              Buffers: shared hit=6487
+              ->  Nested Loop (actual time=0.040..5.970 rows=451.00 loops=1)
+                    Buffers: shared hit=6484
+                    ->  Nested Loop (actual time=0.033..5.248 rows=451.00 loops=1)
+                          Buffers: shared hit=5131
+                          ->  Nested Loop (actual time=0.031..4.862 rows=451.00 loops=1)
+                                Buffers: shared hit=4229
+                                ->  Index Only Scan using ix_project_attributes_kv on project_attributes a (actual time=0.024..0.187 rows=1406.00 loops=1)
+                                      Index Cond: ((key = 'stack'::text) AND (value = 'go'::text))
+                                      Heap Fetches: 0
+                                      Index Searches: 1
+                                      Buffers: shared hit=11
+                                ->  Index Scan using projects_pkey on projects p (actual time=0.003..0.003 rows=0.32 loops=1406)
+                                      Index Cond: (id = a.project_id)
+                                      Filter: ((status)::text = 'open'::text)
+                                      Rows Removed by Filter: 1
+                                      Index Searches: 1406
+                                      Buffers: shared hit=4218
+                          ->  Index Scan using categories_pkey on categories c (actual time=0.001..0.001 rows=1.00 loops=451)
+                                Index Cond: (id = p.category_id)
+                                Index Searches: 451
+                                Buffers: shared hit=902
+                    ->  Index Scan using users_pkey on users u (actual time=0.001..0.001 rows=1.00 loops=451)
+                          Index Cond: (id = p.client_id)
+                          Index Searches: 451
+                          Buffers: shared hit=1353
+        SubPlan 1
+          ->  Aggregate (actual time=0.028..0.028 rows=1.00 loops=20)
+                Buffers: shared hit=101
+                ->  Sort (actual time=0.027..0.027 rows=2.45 loops=20)
+                      Sort Key: s.id
+                      Sort Method: quicksort  Memory: 25kB
+                      Buffers: shared hit=101
+                      ->  Hash Join (actual time=0.008..0.025 rows=2.45 loops=20)
+                            Hash Cond: (s.id = ps.skill_id)
+                            Buffers: shared hit=101
+                            ->  Seq Scan on skills s (actual time=0.001..0.009 rows=200.00 loops=20)
+                                  Buffers: shared hit=40
+                            ->  Hash (actual time=0.003..0.003 rows=2.45 loops=20)
+                                  Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                  Buffers: shared hit=61
+                                  ->  Index Only Scan using project_skills_pkey on project_skills ps (actual time=0.002..0.002 rows=2.45 loops=20)
+                                        Index Cond: (project_id = p.id)
+                                        Heap Fetches: 0
+                                        Index Searches: 20
+                                        Buffers: shared hit=61
+        SubPlan 2
+          ->  Aggregate (actual time=0.004..0.004 rows=1.00 loops=20)
+                Buffers: shared hit=61
+                ->  Index Only Scan using proposals_project_id_freelancer_id_key on proposals pr (actual time=0.003..0.003 rows=4.70 loops=20)
+                      Index Cond: (project_id = p.id)
+                      Heap Fetches: 0
+                      Index Searches: 20
+                      Buffers: shared hit=61
+Planning:
+  Buffers: shared hit=39
+Planning Time: 0.663 ms
+Execution Time: 6.886 ms
+--- search
+Limit (actual time=0.220..0.973 rows=20.00 loops=1)
+  Buffers: shared hit=393
+  ->  Nested Loop (actual time=0.219..0.970 rows=20.00 loops=1)
+        Buffers: shared hit=393
+        ->  Nested Loop (actual time=0.141..0.300 rows=20.00 loops=1)
+              Join Filter: (c.id = p.category_id)
+              Rows Removed by Join Filter: 110
+              Buffers: shared hit=166
+              ->  Index Scan using ix_projects_catalog on projects p (actual time=0.128..0.268 rows=20.00 loops=1)
+                    Index Cond: ((status)::text = 'open'::text)
+                    Filter: (search_vector @@ '''loqua'' | ''quagurmi'''::tsquery)
+                    Rows Removed by Filter: 53
+                    Index Searches: 1
+                    Buffers: shared hit=165
+              ->  Materialize (actual time=0.000..0.001 rows=6.50 loops=20)
+                    Storage: Memory  Maximum Storage: 17kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on categories c (actual time=0.006..0.007 rows=12.00 loops=1)
+                          Buffers: shared hit=1
+        ->  Index Scan using users_pkey on users u (actual time=0.001..0.001 rows=1.00 loops=20)
+              Index Cond: (id = p.client_id)
+              Index Searches: 20
+              Buffers: shared hit=60
+        SubPlan 1
+          ->  Aggregate (actual time=0.027..0.027 rows=1.00 loops=20)
+                Buffers: shared hit=104
+                ->  Sort (actual time=0.026..0.026 rows=2.75 loops=20)
+                      Sort Key: s.id
+                      Sort Method: quicksort  Memory: 25kB
+                      Buffers: shared hit=104
+                      ->  Hash Join (actual time=0.007..0.024 rows=2.75 loops=20)
+                            Hash Cond: (s.id = ps.skill_id)
+                            Buffers: shared hit=104
+                            ->  Seq Scan on skills s (actual time=0.001..0.009 rows=200.00 loops=20)
+                                  Buffers: shared hit=40
+                            ->  Hash (actual time=0.003..0.003 rows=2.75 loops=20)
+                                  Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                  Buffers: shared hit=64
+                                  ->  Index Only Scan using project_skills_pkey on project_skills ps (actual time=0.002..0.002 rows=2.75 loops=20)
+                                        Index Cond: (project_id = p.id)
+                                        Heap Fetches: 9
+                                        Index Searches: 20
+                                        Buffers: shared hit=64
+        SubPlan 2
+          ->  Aggregate (actual time=0.003..0.003 rows=1.00 loops=20)
+                Buffers: shared hit=63
+                ->  Index Only Scan using proposals_project_id_freelancer_id_key on proposals pr (actual time=0.002..0.003 rows=5.30 loops=20)
+                      Index Cond: (project_id = p.id)
+                      Heap Fetches: 3
+                      Index Searches: 20
+                      Buffers: shared hit=63
+Planning:
+  Buffers: shared hit=50
+Planning Time: 0.607 ms
+Execution Time: 1.010 ms
+--- freelancer_proposals
+Limit (actual time=0.015..0.160 rows=20.00 loops=1)
+  Buffers: shared hit=83
+  ->  Nested Loop (actual time=0.015..0.157 rows=20.00 loops=1)
+        Buffers: shared hit=83
+        ->  Index Scan using ix_proposals_freelancer on proposals pr (actual time=0.009..0.085 rows=20.00 loops=1)
+              Index Cond: (freelancer_id = '5851'::bigint)
+              Index Searches: 1
+              Buffers: shared hit=23
+        ->  Index Scan using projects_pkey on projects p (actual time=0.003..0.003 rows=1.00 loops=20)
+              Index Cond: (id = pr.project_id)
+              Index Searches: 20
+              Buffers: shared hit=60
+Planning:
+  Buffers: shared hit=49
+Planning Time: 0.285 ms
+Execution Time: 0.174 ms
+--- stats_by_category
+Sort (actual time=147.182..154.187 rows=12.00 loops=1)
+  Sort Key: c.name COLLATE "C"
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=39732 read=973
+  ->  Finalize GroupAggregate (actual time=147.146..154.176 rows=12.00 loops=1)
+        Group Key: c.name
+        Buffers: shared hit=39732 read=973
+        ->  Gather Merge (actual time=147.117..154.131 rows=36.00 loops=1)
+              Workers Planned: 2
+              Workers Launched: 2
+              Buffers: shared hit=39732 read=973
+              ->  Sort (actual time=144.622..144.626 rows=12.00 loops=3)
+                    Sort Key: c.name
+                    Sort Method: quicksort  Memory: 26kB
+                    Buffers: shared hit=39732 read=973
+                    Worker 0:  Sort Method: quicksort  Memory: 26kB
+                    Worker 1:  Sort Method: quicksort  Memory: 26kB
+                    ->  Partial HashAggregate (actual time=144.576..144.583 rows=12.00 loops=3)
+                          Group Key: c.name
+                          Batches: 1  Memory Usage: 32kB
+                          Buffers: shared hit=39716 read=973
+                          Worker 0:  Batches: 1  Memory Usage: 32kB
+                          Worker 1:  Batches: 1  Memory Usage: 32kB
+                          ->  Hash Join (actual time=18.609..112.187 rows=142953.00 loops=3)
+                                Hash Cond: (p.category_id = c.id)
+                                Buffers: shared hit=39716 read=973
+                                ->  Parallel Hash Join (actual time=18.580..91.830 rows=142953.00 loops=3)
+                                      Hash Cond: (pr.project_id = p.id)
+                                      Buffers: shared hit=39713 read=973
+                                      ->  Parallel Seq Scan on proposals pr (actual time=0.010..33.289 rows=142953.00 loops=3)
+                                            Buffers: shared hit=22305 read=973
+                                      ->  Parallel Hash (actual time=17.828..17.828 rows=33333.33 loops=3)
+                                            Buckets: 131072  Batches: 1  Memory Usage: 5760kB
+                                            Buffers: shared hit=17408
+                                            ->  Parallel Seq Scan on projects p (actual time=0.010..9.987 rows=33333.33 loops=3)
+                                                  Buffers: shared hit=17408
+                                ->  Hash (actual time=0.020..0.020 rows=12.00 loops=3)
+                                      Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                      Buffers: shared hit=3
+                                      ->  Seq Scan on categories c (actual time=0.014..0.015 rows=12.00 loops=3)
+                                            Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=37
+Planning Time: 0.256 ms
+Execution Time: 154.236 ms
+--- top_freelancers
+Limit (actual time=109.750..109.756 rows=20.00 loops=1)
+  Buffers: shared hit=21965
+  ->  Sort (actual time=109.748..109.752 rows=20.00 loops=1)
+        Sort Key: (sum(pr.proposed_amount)) DESC, pr.freelancer_id
+        Sort Method: top-N heapsort  Memory: 27kB
+        Buffers: shared hit=21965
+        ->  HashAggregate (actual time=98.776..105.490 rows=9872.00 loops=1)
+              Group Key: pr.freelancer_id, u.display_name
+              Batches: 1  Memory Usage: 6161kB
+              Buffers: shared hit=21962
+              ->  Hash Join (actual time=3.442..59.735 rows=49155.00 loops=1)
+                    Hash Cond: (pr.freelancer_id = u.id)
+                    Buffers: shared hit=21962
+                    ->  Index Scan using ux_proposals_one_accepted on proposals pr (actual time=0.016..33.427 rows=49155.00 loops=1)
+                          Index Searches: 1
+                          Buffers: shared hit=21808
+                    ->  Hash (actual time=3.404..3.405 rows=15000.00 loops=1)
+                          Buckets: 16384  Batches: 1  Memory Usage: 988kB
+                          Buffers: shared hit=154
+                          ->  Seq Scan on users u (actual time=0.009..1.087 rows=15000.00 loops=1)
+                                Buffers: shared hit=154
+Planning:
+  Buffers: shared hit=26
+Planning Time: 0.259 ms
+Execution Time: 110.423 ms
+
+=== MongoDB ===
+--- card
+plan: EXPRESS_IXSCAN(_id_)
+returned=1 keysExamined=1 docsExamined=1 ms=0
+--- catalog
+plan: LIMIT <- PROJECTION_DEFAULT <- FETCH <- SORT_MERGE <- IXSCAN(status_1_skills.id_1_createdAt_-1_budget_1) <- IXSCAN(status_1_skills.id_1_createdAt_-1_budget_1)
+returned=20 keysExamined=133 docsExamined=20 ms=0
+--- by_attribute
+plan: LIMIT <- PROJECTION_DEFAULT <- FETCH <- IXSCAN(attrs.k_1_attrs.v_1_status_1_createdAt_-1)
+returned=20 keysExamined=20 docsExamined=20 ms=1
+--- search
+plan: PROJECTION_DEFAULT <- SORT <- FETCH <- TEXT_MATCH(title_text_description_text) <- FETCH <- OR <- IXSCAN(title_text_description_text) <- IXSCAN(title_text_description_text)
+returned=20 keysExamined=19743 docsExamined=37690 ms=73
+--- freelancer_proposals
+plan: PROJECTION_SIMPLE <- FETCH <- IXSCAN(proposals.freelancer.id_1)
+returned=66 keysExamined=66 docsExamined=66 ms=1
+--- stats_by_category
+plan: PROJECTION_DEFAULT <- COLLSCAN
+returned=100000 keysExamined=0 docsExamined=100000 ms=609
+--- top_freelancers
+plan: PROJECTION_SIMPLE <- COLLSCAN
+returned=49155 keysExamined=0 docsExamined=100000 ms=364
